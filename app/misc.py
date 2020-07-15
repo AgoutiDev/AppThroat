@@ -1000,7 +1000,7 @@ def load_user(user_id):
         prefs = prefs.where((UserMetadata.value == '1') | (UserMetadata.key == 'subtheme')).dicts()
 
         try:
-            subs = SubSubscriber.select(SubSubscriber.sid, Sub.name, SubSubscriber.status).join(Sub, on=(
+            subs = SubSubscriber.select(SubSubscriber.sid, Sub.name, Sub.title, SubSubscriber.status).join(Sub, on=(
                     Sub.sid == SubSubscriber.sid)).switch(SubSubscriber).where(SubSubscriber.uid == user_id)
             subs = subs.order_by(SubSubscriber.order.asc()).dicts()
             return SiteUser(user, subs, prefs)
