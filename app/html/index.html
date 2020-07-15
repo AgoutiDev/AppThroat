@@ -1,0 +1,88 @@
+@extends("shared/layout_home.html")
+@import "shared/post.html" as ipost
+@require(sort_type, ann, page, posts, kw)
+@def sidebar():
+<div id="sortbuttons" role="group" class="pure-button-group">
+  <div class="pure-g">
+      @if sort_type.startswith('all'):
+        <a href="@{url_for('home.all_hot')}" class="sbm-post pure-button button-xsmall @{(sort_type == 'home.all_hot') and 'pure-button-primary' or ''} pure-u-md-7-24">@{_('Hot')}</a>
+        <a href="@{url_for('home.all_top')}" class="sbm-post pure-button button-xsmall @{(sort_type == 'home.all_top') and 'pure-button-primary' or ''} pure-u-md-7-24">@{_('Top')}</a>
+        <a href="@{url_for('home.all_new')}" class="sbm-post pure-button button-xsmall @{(sort_type == 'home.all_new') and 'pure-button-primary' or ''} pure-u-md-7-24">@{_('New')}</a>
+      @elif sort_type.startswith('home'):
+        <a href="@{url_for('home.hot')}" class="sbm-post pure-button button-xsmall @{(sort_type == 'home.hot') and 'pure-button-primary' or ''} pure-u-md-7-24">@{_('Hot')}</a>
+        <a href="@{url_for('home.top')}" class="sbm-post pure-button button-xsmall @{(sort_type == 'home.top') and 'pure-button-primary' or ''} pure-u-md-7-24">@{_('Top')}</a>
+        <a href="@{url_for('home.new')}" class="sbm-post pure-button button-xsmall @{(sort_type == 'home.new') and 'pure-button-primary' or ''} pure-u-md-7-24">@{_('New')}</a>
+      @end
+  </div>
+</div>
+@include('shared/sidebar/home.html')
+@if sort_type in ('home.all_new', 'sub.view_sub_new') and current_user.likes_scroll():
+  <hr />
+  &copy;@{config.site.copyright}
+  <br>
+  @for text,link in config.site.footer.links.items():
+    <a href="@{link}">@{text}</a> |
+  @end
+  <a href="/license">License</a>
+  <br>
+  @{_('Served by %(host)s', host=hostname)} \
+  @if config.app.debug or current_user.admin:
+   | @{_('Page generated in __EXECUTION_TIME__ms with __DB_QUERIES__ queries')}
+  @end
+@end
+@end
+
+@def main():
+<div id="container">
+  @if sort_type.startswith('home.') or sort_type.startswith('home.all_'):
+    @if ann:
+      <div id="announcement-post">
+      @ipost.singlePost(ann, False, announcement=True)
+      <hr/>
+      </div>
+    @end
+  @end
+
+  @if not posts:
+    <h1 class="noshit">@{_('There are no posts here, yet.')}</h1>
+  @end
+  <div class="alldaposts">
+    @for post in posts:
+      @if not ann or ann['pid'] != post['pid']:
+        @{ipost.singlePost(post, False)!!html}
+      @end
+    @end
+  </div>
+  @if sort_type not in ('home.all_new', 'sub.view_sub_new') or not current_user.likes_scroll():
+    @if page > 1:
+      <a href="@{url_for(sort_type, page=(page-1), **kw)}" class="pure-button">@{_('Previous page')}</a>
+    @end
+    @if len(posts) == 25:
+      <a href="@{url_for(sort_type, page=(page+1), **kw)}" class="pure-button">@{_('Next page')}</a>
+    @end
+  @end
+</div>
+  @if sort_type in ('home.all_new', 'sub.view_sub_new') and current_user.likes_scroll():
+    @def footer():
+    @end
+  @end
+@end
+
+@def pagefoot():
+
+    <script type="text/javascript" charset="utf-8">
+      window.oindex = true;
+      @if "labrat" in current_user.prefs:
+
+        window.labrat = true;
+        @if sort_type in ('home.all_new'):
+        // TODO: add for subs
+        window.nposts = '/all/new';
+        window.blocked = @{current_user.blocksid}
+        @end
+      @end
+      @if sort_type in ('home.all_new', 'sub.view_sub_new') and current_user.likes_scroll():
+        window.moreuri = '@{url_for(request.endpoint + '_more')}/';
+      @end
+    </script>
+@end

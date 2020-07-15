@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="@{get_locale()}">
+  <head>
+    @def head():
+    @end
+    @{head()!!html}
+    <meta charset="utf-8">
+    <meta name="keywords" content="forum, vote, comment, submit, throat, phuks, phuks.co"/>
+    <meta name="referrer" content="always"/>
+    @def meta_description():
+        <meta name="description" content="@{config.site.lema}"/>
+    @end
+    @{meta_description()!!html}
+    <meta name="robots" content="index, follow"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <!-- mobile stuff -->
+    <meta name="theme-color" content="white"/>
+    <meta name="msapplication-navbutton-color" content="white"/>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="white-translucent"/>
+
+    <link rel="icon" href="@{url_for('static', filename='img/icon.png') }">
+
+    <title>
+
+      @if not current_user.is_anonymous:
+        @if current_user.notifications > 0:
+          (@{current_user.notifications})
+        @end
+      @end
+      @def title():
+      @end
+      @{title()!!html} @{config.site.lema} \
+    </title>
+
+    <link rel="stylesheet" type="text/css" href="@{asset_url_for('main.css') }">
+  </head>
+
+<body class="@{(config.site.enable_totp and current_user.admin) and 'body_admin' or ''} @{(request.cookies.get( "dayNight")=="dank") and 'dark dank' or ''} @{(request.cookies.get( "dayNight")=="dark") and 'dark' or ''}">
+  @if config.site.enable_totp and current_user.admin:
+  <div class="admin_alert">@{_('Admin mode is currently enabled.')}
+    <form method="POST" action="/admin/logout" id="adminlogout">
+      @{ form.LogOutForm().csrf_token() !!html }
+      <button type="submit" class="btn_link">@{_('Disable')}</button>
+    </form>
+  </div>
+  @end
+
+  <div id="menu" class="th-navbar pure-g">
+  <div class="wrap full">
+    <div class="cw-brand pure-u-1 pure-u-md-3-24"> <!-- logo -->
+      <div class="pure-menu">
+        <a class="logocont" href="@{url_for('home.index')}">
+                   <svg class="logo" xmlns="http://www.w3.org/2000/svg" version="1.1" xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs" width="90" height="40" viewBox="-0.12109375 -84.80859375 467.76171875 85.76953125"><path d="M66 -20.96L75.23 0L87.8 0L49.71 -83.85L37.85 -83.85L-0.12 0L12.22 0L21.44 -20.96ZM61.81 -30.55L25.63 -30.55L43.72 -71.63Z M157.16 -42.4L157.16 -15.09C151.57 -11.5 145.02 -9.7 137.51 -9.7C131.21 -9.7 125.52 -11.1 120.44 -13.9C115.37 -16.69 111.4 -20.54 108.53 -25.45C105.65 -30.37 104.21 -35.86 104.21 -41.92C104.21 -48.07 105.65 -53.6 108.53 -58.52C111.4 -63.43 115.37 -67.26 120.44 -70.01C125.52 -72.77 131.24 -74.15 137.63 -74.15C147.14 -74.15 155.24 -70.91 161.95 -64.44L169.38 -71.87C165.54 -76.1 160.89 -79.32 155.42 -81.51C149.95 -83.71 143.86 -84.81 137.15 -84.81C128.61 -84.81 120.92 -82.97 114.1 -79.3C107.27 -75.62 101.92 -70.51 98.04 -63.97C94.17 -57.42 92.23 -50.07 92.23 -41.92C92.23 -33.78 94.17 -26.45 98.04 -19.94C101.92 -13.44 107.25 -8.33 114.04 -4.61C120.82 -0.9 128.45 0.96 136.91 0.96C142.9 0.96 148.65 0.04 154.16 -1.8C159.67 -3.63 164.51 -6.27 168.66 -9.7L168.66 -42.4Z M206.51 -4.61C213.3 -0.9 220.92 0.96 229.39 0.96C237.77 0.96 245.36 -0.9 252.15 -4.61C258.94 -8.33 264.25 -13.44 268.08 -19.94C271.91 -26.45 273.83 -33.78 273.83 -41.92C273.83 -50.07 271.91 -57.4 268.08 -63.91C264.25 -70.41 258.94 -75.52 252.15 -79.24C245.36 -82.95 237.77 -84.81 229.39 -84.81C220.92 -84.81 213.3 -82.95 206.51 -79.24C199.72 -75.52 194.39 -70.39 190.52 -63.85C186.65 -57.3 184.71 -49.99 184.71 -41.92C184.71 -33.86 186.65 -26.55 190.52 -20C194.39 -13.46 199.72 -8.33 206.51 -4.61ZM245.98 -13.9C241.07 -11.1 235.54 -9.7 229.39 -9.7C223.24 -9.7 217.67 -11.1 212.68 -13.9C207.69 -16.69 203.78 -20.54 200.94 -25.45C198.11 -30.37 196.69 -35.86 196.69 -41.92C196.69 -47.99 198.11 -53.48 200.94 -58.4C203.78 -63.31 207.69 -67.16 212.68 -69.95C217.67 -72.75 223.24 -74.15 229.39 -74.15C235.54 -74.15 241.07 -72.75 245.98 -69.95C250.89 -67.16 254.76 -63.31 257.6 -58.4C260.43 -53.48 261.85 -47.99 261.85 -41.92C261.85 -35.86 260.43 -30.37 257.6 -25.45C254.76 -20.54 250.89 -16.69 245.98 -13.9Z M300.78 -8.62C307.01 -2.24 315.71 0.96 326.89 0.96C338.07 0.96 346.78 -2.22 353.01 -8.56C359.24 -14.91 362.35 -24.12 362.35 -36.18L362.35 -83.85L350.73 -83.85L350.73 -36.65C350.73 -27.55 348.7 -20.78 344.62 -16.35C340.55 -11.92 334.68 -9.7 327.01 -9.7C311.28 -9.7 303.42 -18.69 303.42 -36.65L303.42 -83.85L291.44 -83.85L291.44 -36.18C291.44 -24.2 294.55 -15.01 300.78 -8.62Z M402 -73.43L402 0L413.86 0L413.86 -73.43L442.61 -73.43L442.61 -83.85L373.25 -83.85L373.25 -73.43Z M455.66 -83.85L455.66 0L467.64 0L467.64 -83.85Z"></path></svg>
+     
+        <sup class="alfa">alfa</sup>  
+        <span class="logo-ag">•</span>  
+        </a>
+ 
+        <a href="/submit/text@{(request.view_args and request.view_args.get('sub')) and ('/' + request.view_args['sub']) or ''}"><span id="createPostIcon" class="p-icon" data-icon="edit"></span></a>
+        <a id="toggle" href="#" class="th-toggle">
+          <s class="bar"></s>
+          <s class="bar"></s>
+        </a>
+      </div>
+    </div>
+
+    <div id="th-uinfo" class="pure-u-1 pure-u-md-12-24">  
+      <div class="cw-items can-transform">
+        @if current_user.is_anonymous:
+        <div id="toggledark" class="glyphbutton">
+          <span class="p-icon" data-icon="@{(request.cookies.get( "dayNight")=="dark") and 'sun' or 'moon'}"></span>
+        </div>
+        <a href="@{url_for('auth.login', next=request.path)}" class="pure-button pure-button-primary">@{_('Log in')}</a>
+        <a href="@{url_for('auth.register')}" class="pure-button button-secondary">@{_('Register')}</a>
+        @else:
+        <a href="@{ url_for('user.view', user=current_user.name)}" class="smallcaps" id="unameb">@{current_user.name}</a>
+        <span class="separator"></span>
+        <abbr title="@{_('Score')}" class="bold" id="postscore">@{current_user.score}</abbr>
+        <span class="separator"></span>
+        <div class="glyphbutton">
+          <a href="/settings"><span class="p-icon" data-icon="cog"></span></a>
+        </div>
+        <div class="glyphbutton sep ">
+          <a href="@{ url_for('messages.inbox_sort') }">
+            <span class="hasmail">
+              <span class="p-icon @{(current_user.notifications != 0) and 'hasmail' or ''}" data-icon="mail"></span>
+              <span id="mailcount" class="mailcount" @{(current_user.notifications == 0) and 'style="display:none;"' or ''!!html}>@{current_user.notifications}</span>
+            </span>
+          </a>
+        </div>
+        <div id="toggledark" class="glyphbutton">
+          <span class="p-icon" data-icon="@{(request.cookies.get( "dayNight")=="dark") and 'sun' or 'moon'}"></span>
+        </div>
+        <form method="POST" action="@{ url_for('do.logout') }" id="logout">
+          @{ form.LogOutForm().csrf_token() !!html }
+          <button type="submit" class="pure-button button-secondary">@{_('Log out')}</button>
+        </form>
+        @end
+        @{ form.LogOutForm().csrf_token() !!html }
+      </div>
+    </div>
+  </div>
+</div>
+  
+  @def content():
+  <div class="pure-g  wrap top">
+    <div class="pure-u-1 pure-u-md-18-24"> <!-- main -->
+      @def main():
+      @end
+      @{main()!!html}
+    </div>
+    <div class="sidebar pure-u-1 pure-u-md-6-24">  
+      @def sidebar():
+      @end
+      @{sidebar()!!html}
+    </div>
+  </div>
+  @end
+  @{content()!!html}
+
+<div id="footer">					
+  <div class="footer wrap">
+    @def footer():
+      <div class="f-l">
+      &copy; Agouti - интересное в сети 
+      
+									   
+		  
+									
+		  
+														 
+      @if config.app.debug or current_user.admin:
+        <small> @{_('Page generated in __EXECUTION_TIME__ms with __DB_QUERIES__ queries')} </small>
+      @end
+      
+       <br>
+          Мнение автора темы, ответы в комментариях могут не совпадать в мнением администрации сайта...
+      
+      </div> 
+	  <div class="f-r">
+      @for text,link in config.site.footer.links.items():
+        <a href="@{link}">@{text}</a>  •
+      @end
+       <a href="https://agouti.ru/s/wiki/7">Помощь</a> 
+      <br>
+
+
+	  </div>
+    @end
+    @{footer()!!html}
+  </div>
+</div> 
+
+  @if config.site.enable_chat:
+    @def chat():
+      @#...
+      @if not current_user.is_anonymous and 'nochat' not in current_user.prefs:
+      <div id="chpop" style="height: 1.65em">
+        <div id="chtitle" hid="true"><span id="cht-text">@{_('Chat')}</span> <div class="glyphbutton"><a href="/chat"><span class="p-icon " data-icon="resize"></span></a></div></div>
+        <div id="chcont"></div>
+        <div id="chbott" style="display: none"><input type="text" id="chsend" maxlength="250" placeholder="@{_('Type here')}"/></div>
+      </div>
+      @end
+    @end
+    @{chat()!!html}
+    <script type="text/javascript">
+      window.chat = @{('nochat' not in current_user.prefs) and 'true' or 'false'};
+    </script>
+  @end
+  <script type="text/javascript" src="@{ asset_url_for('main.js') }"></script>
+  <style>@{current_user.get_global_stylesheet()}</style>
+  @def pagefoot():
+  @end
+  @{pagefoot()!!html}
+</body>
+</html>
