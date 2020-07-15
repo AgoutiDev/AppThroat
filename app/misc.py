@@ -34,7 +34,8 @@ from .socketio import socketio
 from .badges import badges
 
 from .models import Sub, SubPost, User, SiteMetadata, SubSubscriber, Message, UserMetadata, SubRule
-from .models import SubPostVote, SubPostComment, SubPostCommentVote, SiteLog, SubLog, db, SubPostReport, SubPostCommentReport
+from .models import SubPostVote, SubPostComment, SubPostCommentVote, SiteLog, SubLog, db
+from .models import SubPostReport, SubPostCommentReport, PostReportLog, CommentReportLog, Notification
 from .models import SubMetadata, rconn, SubStylesheet, UserIgnores, SubUploads, SubFlair, InviteCode
 from .models import SubMod, SubBan
 from .storage import store_thumbnail, file_url, thumbnail_url
@@ -109,11 +110,9 @@ class SiteUser(object):
         self.top_bar = []
         for i in subs:
             if i['status'] == 1:
-                self.subscriptions.append(i['name'])
-                self.subtitle.append(i['title'])           
-                self.subsid.append(i['sid'])
+                self.subscriptions.append(i['name']) self.subtitle.append(i['title'])                self.subsid.append(i['sid'])
             else:
-                self.subtitle.append(i['title'])           
+                self.subtitle.append(i['title'])			   
                 self.blocksid.append(i['sid'])
 
             if i['status'] in (1, 5):
@@ -146,7 +145,7 @@ class SiteUser(object):
         self.canupload = True if ('canupload' in self.prefs) or self.admin else False
         if config.site.allow_uploads and config.site.upload_min_level == 0:
             self.canupload = True
-        elif config.site.allow_uploads and (config.site.upload_min_level <= get_user_level(self, self.score)[0]):
+        elif config.site.allow_uploads and (config.site.upload_min_level <= get_user_level(self.uid, self.score)[0]):
             self.canupload = True
 
     def __repr__(self):
@@ -646,10 +645,6 @@ def getYoutubeID(url):
 def workWithMentions(data, receivedby, post, sub, cid=None, c_user=current_user):
     """ Does all the job for mentions """
     mts = re.findall(re_amention.LINKS, data)
-    if isinstance(sub, Sub):
-        subname = sub.name
-    else:
-        subname = sub['name']
     if mts:
         mts = list(set(mts))  # Removes dupes
         clean_mts = []
@@ -678,14 +673,11 @@ def workWithMentions(data, receivedby, post, sub, cid=None, c_user=current_user)
             if user.uid != c_user.uid and user.uid != receivedby:
                 # Checks done. Send our shit
                 if cid:
-                    link = url_for('sub.view_perm', pid=post.pid, sub=subname, cid=cid)
+                    Notification(type='COMMENT_MENTION', sub=post.sid, post=post.pid, comment=cid,
+                                 sender=c_user.uid, target=user.uid).save()
                 else:
-                    link = url_for('sub.view_post', pid=post.pid, sub=subname)
-                create_message(c_user.uid, user.uid,
-                               subject="You've been tagged in a post",
-                               content="@{0} tagged you in [{1}]({2})"
-                               .format(c_user.name, "Here: " + post.title, link),
-                               link=link, mtype=8)
+                    Notification(type='POST_MENTION', sub=post.sid, post=post.pid, comment=cid,
+                                 sender=c_user.uid, target=user.uid).save()
                 socketio.emit('notification',
                               {'count': get_notification_count(user.uid)},
                               namespace='/snt',
@@ -878,7 +870,7 @@ def getSinglePost(pid):
     if current_user.is_authenticated:
         posts = SubPost.select(SubPost.nsfw, SubPost.sid, SubPost.content, SubPost.pid, SubPost.title, SubPost.posted,
                                SubPost.score, SubPost.upvotes, SubPost.downvotes,
-                               SubPost.thumbnail, SubPost.link, User.name.alias('user'), Sub.name.alias('sub'), Sub.title.alias('name'), 
+                               SubPost.thumbnail, SubPost.link, User.name.alias('user'), Sub.name.alias('sub'), Sub.title.alias('name'),
                                SubPost.flair, SubPost.edited,
                                SubPost.comments, SubPostVote.positive, User.uid, User.status.alias('userstatus'),
                                SubPost.deleted, SubPost.ptype)
@@ -991,11 +983,12 @@ def getStickies(sid):
 
 
 def load_user(user_id):
-    user = User.select(fn.Count(Message.mid).alias('notifications'),
+    user = User.select((fn.Count(Message.mid) + fn.Count(Notification.id)).alias('notifications'),
                        User.given, User.score, User.name, User.uid, User.status, User.email, User.language)
     user = user.join(Message, JOIN.LEFT_OUTER, on=(
-            (Message.receivedby == User.uid) & (Message.mtype != 6) & (Message.mtype != 9) &
-            (Message.mtype != 41) & Message.read.is_null(True))).switch(User)
+            (Message.receivedby == User.uid) & (Message.mtype == 1) & Message.read.is_null(True))).switch(User)
+    user = user.join(Notification, JOIN.LEFT_OUTER,
+                     on=(Notification.target == User.uid) & Notification.read.is_null(True)).switch(User)
     user = user.group_by(User.uid).where(User.uid == user_id).dicts().get()
 
     if request.path == '/socket.io/':
@@ -1005,7 +998,7 @@ def load_user(user_id):
         prefs = prefs.where((UserMetadata.value == '1') | (UserMetadata.key == 'subtheme')).dicts()
 
         try:
-            subs = SubSubscriber.select(SubSubscriber.sid, Sub.name, Sub.title, SubSubscriber.status).join(Sub, on=(
+            subs = SubSubscriber.select(SubSubscriber.sid, Sub.name, SubSubscriber.status).join(Sub, on=(
                     Sub.sid == SubSubscriber.sid)).switch(SubSubscriber).where(SubSubscriber.uid == user_id)
             subs = subs.order_by(SubSubscriber.order.asc()).dicts()
             return SiteUser(user, subs, prefs)
@@ -1014,8 +1007,9 @@ def load_user(user_id):
 
 
 def get_notification_count(uid):
-    return Message.select().where((Message.receivedby == uid) & (Message.mtype != 6) & (Message.mtype != 9) & (
-            Message.mtype != 41) & Message.read.is_null(True)).count()
+    msg = Message.select().where((Message.receivedby == uid) & (Message.mtype == 1) & Message.read.is_null(True)).count()
+    notif = Notification.select().where((Notification.target == uid) & Notification.read.is_null(True)).count()
+    return msg + notif
 
 
 def get_errors(form, first=False):
@@ -1384,6 +1378,7 @@ def metadata_to_dict(metadata):
 # Log types
 LOG_TYPE_USER = 10
 LOG_TYPE_USER_BAN = 19
+LOG_TYPE_USER_UNBAN = 54
 
 LOG_TYPE_SUB_CREATE = 20
 LOG_TYPE_SUB_SETTINGS = 21
@@ -1402,7 +1397,6 @@ LOG_TYPE_SUB_DELETE_COMMENT = 53
 
 LOG_TYPE_SUB_TRANSFER = 30
 
-LOG_TYPE_SUB_CREATION = 40
 LOG_TYPE_ANNOUNCEMENT = 41
 LOG_TYPE_DOMAIN_BAN = 42
 LOG_TYPE_DOMAIN_UNBAN = 43
@@ -1414,8 +1408,9 @@ LOG_TYPE_DISABLE_INVITE = 48
 LOG_TYPE_DISABLE_REGISTRATION = 49
 LOG_TYPE_ENABLE_REGISTRATION = 50
 
-LOG_TYPE_USER_UNBAN = 51
-
+LOG_TYPE_REPORT_CLOSE = 55
+LOG_TYPE_REPORT_REOPEN = 56
+LOG_TYPE_REPORT_CLOSE_RELATED = 57
 
 def create_sitelog(action, uid, comment='', link=''):
     SiteLog.create(action=action, uid=uid, desc=comment, link=link).save()
@@ -1425,6 +1420,17 @@ def create_sitelog(action, uid, comment='', link=''):
 def create_sublog(action, uid, sid, comment='', link='', admin=False, target=None):
     SubLog.create(action=action, uid=uid, sid=sid, desc=comment, link=link, admin=admin, target=target).save()
 
+
+# `id` is the report id
+def create_reportlog(action, uid, id, type='', related=False, original_report=''):
+    if type == 'post' and related == False:
+        PostReportLog.create(action=action, uid=uid, id=id).save()
+    elif type == 'comment' and related == False:
+        CommentReportLog.create(action=action, uid=uid, id=id).save()
+    elif type == 'post' and related == True:
+        PostReportLog.create(action=action, uid=uid, id=id, desc=original_report).save()
+    elif type == 'comment' and related == True:
+        CommentReportLog.create(action=action, uid=uid, id=id, desc=original_report).save()
 
 def is_domain_banned(link):
     bans = SiteMetadata.select().where(SiteMetadata.key == 'banned_domain')
@@ -1482,7 +1488,6 @@ def get_all_subs():
 
 def get_comment_tree(comments, root=None, only_after=None, uid=None, provide_context=True):
     """ Returns a fully paginated and expanded comment tree.
-
     TODO: Move to misc and implement globally
     @param comments: bare list of comments (only cid and parentcid)
     @param root: if present, the root comment to start building the tree on
@@ -1574,13 +1579,38 @@ def get_comment_tree(comments, root=None, only_after=None, uid=None, provide_con
 
     commdata = {}
     for comm in expcomms:
-        if comm['userstatus'] == 10 or comm['status']:
-            comm['user'] = '[Deleted]'
-            comm['uid'] = None
+        comm['visibility'] = ''
+        sub = Sub.select().join(SubPost).join(SubPostComment).where(SubPostComment.cid == comm['cid']).get()
 
         if comm['status']:
-            comm['content'] = ''
-            comm['lastedit'] = None
+            if comm['status'] == 1:
+                if current_user.is_admin():
+                    comm['visibility'] = 'admin-self-del'
+                elif current_user.is_mod(sub.sid, 1):
+                    comm['visibility'] = 'mod-self-del'
+                else:
+                    comm['user'] = _('[Deleted]')
+                    comm['uid'] = None
+                    comm['content'] = ''
+                    comm['lastedit'] = None
+                    comm['visibility'] = 'none'
+            elif comm['status'] == 2:
+                if current_user.is_admin() or current_user.is_mod(sub.sid, 1):
+                    comm['visibility'] = 'mod-del'
+                else:
+                    comm['user'] = _('[Deleted]')
+                    comm['uid'] = None
+                    comm['content'] = ''
+                    comm['lastedit'] = None
+                    comm['visibility'] = 'none'
+
+        if comm['userstatus'] == 10:
+            comm['user'] = _('[Deleted]')
+            comm['uid'] = None
+            if comm['status'] == 1:
+                comm['content'] = ''
+                comm['lastedit'] = None
+                comm['visibility'] = 'none'
         # del comm['userstatus']
         commdata[comm['cid']] = comm
 
@@ -1622,6 +1652,12 @@ def get_messages(mtype, read=False, uid=None):
 @cache.memoize(1)
 def get_unread_count(mtype):
     return get_messages(mtype, True).count()
+
+
+@cache.memoize(1)
+def get_notif_count():
+    """ Temporary till we get rid of the old template """
+    return Notification.select().where((Notification.target == current_user.uid) & Notification.read.is_null(True)).count()
 
 
 def cast_vote(uid, target_type, pcid, value):
