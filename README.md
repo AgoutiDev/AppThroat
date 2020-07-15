@@ -1,6 +1,8 @@
 # AppThroat
 Just a light modification
 
+(This repository is the initial layout for the job ...)
+
 Establish: https://github.com/Phuks-co/throat
 
 1. Replace the files in the app folder
