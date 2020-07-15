@@ -110,7 +110,9 @@ class SiteUser(object):
         self.top_bar = []
         for i in subs:
             if i['status'] == 1:
-                self.subscriptions.append(i['name']) self.subtitle.append(i['title'])                self.subsid.append(i['sid'])
+                self.subscriptions.append(i['name']) 
+                self.subtitle.append(i['title']) 
+                self.subsid.append(i['sid'])
             else:
                 self.subtitle.append(i['title'])			   
                 self.blocksid.append(i['sid'])
