@@ -11,6 +11,7 @@ Establish: https://github.com/Phuks-co/throat
 
 Just for reference. Only 2 pages have been changed, and this is not for a working instance.
 
-* Removed: `purecss`
+<img src="/AgoutiDev/AppThroat/blob/master/agouti.jpg?raw=true" alt="agouti.jpg">
+
 * Changed svg icons
 * Some minor changes.
