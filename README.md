@@ -9,7 +9,7 @@ Establish: https://github.com/Phuks-co/throat
 2. `npm run build`
 3. You can run a test server by executing `./throat.py`
 
-Just for reference. Just a working layout.
+Just for reference, working layout ...
 
 <img src="agouti.jpg" alt="agouti.jpg">
 
