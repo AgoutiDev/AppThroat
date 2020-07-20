@@ -2,6 +2,7 @@ body{
   background-color: white;
   color: black;
 }
+
 * {
   webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -11,7 +12,10 @@ body{
 abbr[title]{
   text-decoration: none;
 }
-.cw-brand div{margin-left: 1em;}
+
+.cw-brand div{
+  margin-left: 1em;
+}
 
 .content{
   word-wrap: break-word;
@@ -230,10 +234,11 @@ a:hover {
 
 
 .footer {
-  text-align: center;
   font-size: small;
   color: #5d5454;
-  padding: 2em;
+  padding: 0.5em 2em;
+  border-top: 1px solid #ddd;
+  margin: 2em 0 0.5em 0;
 }
 
 .center-container form h1{
@@ -474,6 +479,20 @@ span#notification.fade {
   margin-right: auto;
   display:block;
 }
+.site-log .i-icon {
+  margin: 5px 0 0 10px;
+}
+
+.site-log .i-icon svg {
+  fill: #919191;
+}
+
+a.site-log {
+  color: #919191;
+}
+a.site-log:hover {
+  color: #666;
+}
 
 .wholepost .icon.expando-btn {
     margin-top: 0;
@@ -543,12 +562,12 @@ a.sbm-post:hover {
 /*  /UPLOADER STYLES */
 
 /* POST LIST STYLES */
-.post .author a {
+.post .author a, a.sub {
     font-size: small;
     color: #919191;
     font-weight: 600;
 }
-.post .author a:hover {
+.post .author a:hover, a.sub:hover {
     color: #07c;
 }
 .post {
