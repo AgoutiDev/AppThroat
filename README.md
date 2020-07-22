@@ -15,3 +15,8 @@ Just for reference, working layout ...
 
 * Changed svg icons
 * Some minor changes.
+
+
+There is a lot of work to be done on sisebar (as there is a lot of "noise" now).
+
+<img src="agouti-sub.jpg" alt="agouti.jpg">
