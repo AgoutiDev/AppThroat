@@ -1,15 +1,13 @@
 @require(sub, subInfo, subMods)
 
 <div class="subinfo">
-  <h3><a href="@{url_for('sub.view_sub', sub=sub['name'])}">/@{config.site.sub_prefix}/@{sub['name']}</a> \
+  <h3><span>/@{config.site.sub_prefix}/</span><a href="@{url_for('sub.view_sub', sub=sub['name'])}">@{sub['name']}</a> \
   @if sub['nsfw']:
     <div class="nsfw" alt="@{_('Not safe for work')}">@{_('NSFW')}</div> \
   @end
   </h3>
- 
 	
   <div class="subs">@{_('%(subs)i subscribers', subs=sub['subscribers'])}</div>
-
 
   @if current_user.is_authenticated:
      <div role="group" class="pure-button-group" data-sid="@{sub['sid']}">
@@ -25,16 +23,21 @@
         @end
      </div>
   @end
-
 </div>	
 	
-<hr>
+@if sub['sidebar'] != '':
+  <div class="sub-info">
+    @{func.our_markdown(sub['sidebar'])!!html}
+  </div>
+@else:
+  <hr>
+@end
 
 <div class="moderators">
   @{_('Created by <a href="/u/%(name)s">%(name)s</a>', name=subInfo['creator']['name'])!!html}
   <time-ago datetime="@{sub['creation'].isoformat()}Z"></time-ago>	
 	
-	<br />
+  <br />
 	
   @{_('Moderators')}
   <ul>
@@ -50,12 +53,7 @@
   </ul>
 </div>
 
-
-@if sub['sidebar'] != '':
-  <div class="sub-info">
-    @{func.our_markdown(sub['sidebar'])!!html}
-  </div>
-@end
+<hr>
 
 @if subInfo['wiki'] != '':
   <a href="@{url_for('site.view_post_inbox', pid=subInfo['wiki'] )}" class="sbm-post pure-button">@{_('View wiki')}</a>
