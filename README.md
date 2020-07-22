@@ -11,7 +11,7 @@ Establish: https://github.com/Phuks-co/throat
 
 Just for reference, working layout ...
 
-<img src="n-agouti.jpg" alt="agouti.jpg">
+<img src="agouti.jpg" alt="agouti.jpg">
 
 * Changed svg icons
 * Some minor changes.
