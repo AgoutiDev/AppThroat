@@ -164,15 +164,17 @@
 
   <div class="footer">
     {% block footer %}
-      &copy;{{config.site.copyright}}
-      <br>
-      {% for text,link in config.site.footer.links.items() %}
-        <a href="{{link}}">{{text}}</a> |
-      {% endfor %}
-      <a href="/license">License</a>
-      <br>
-      Served by {{hostname}}
-      {%if config.app.debug or current_user.admin%} | Page generated in __EXECUTION_TIME__ms with __DB_QUERIES__ queries{%endif%}
+       <div class="footer-right">
+        {% for text,link in config.site.footer.links.items() %}
+          <a href="{{link}}">{{text}}</a> • 
+        {% endfor %}
+         <a href="/license">License</a>
+       </div>
+         &copy;{{config.site.copyright}}	  
+       <div class="footer-stat">  
+        Served by {{hostname}}
+        {%if config.app.debug or current_user.admin%} | Page generated in __EXECUTION_TIME__ms with __DB_QUERIES__ queries{%endif%}
+       </div> 
     {% endblock %}
   </div>
   <script src="{{ asset_url_for('main.js') }}"></script>
