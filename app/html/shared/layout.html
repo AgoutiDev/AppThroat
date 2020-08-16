@@ -21,7 +21,7 @@
 
     <link rel="icon" href="@{url_for('static', filename='img/icon.png') }">
 
-    <title>
+    <title> \
 
       @if not current_user.is_anonymous:
         @if current_user.notifications > 0:
@@ -30,7 +30,12 @@
       @end
       @def title():
       @end
-      @{title()!!html} @{config.site.lema} \
+      @{title()!!html} \
+      @def lema():
+        @#
+        @{config.site.lema} \
+      @end
+      @{lema()!!html} \
     </title>
 
     <link rel="stylesheet" type="text/css" href="@{asset_url_for('main.css') }">
@@ -74,7 +79,7 @@
       </div>
       <ul id="hiddensubs"></ul>
     </div>
-  </div>      
+  </div>
 
   <div id="menu" class="th-navbar pure-g">
     <div class="cw-brand-logo">  
@@ -97,8 +102,7 @@
      <div class="icon" data-icon="search"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M6.344 9.344c1.656 0 3-1.344 3-3s-1.344-3-3-3-3 1.344-3 3 1.344 3 3 3zM10.344 9.344l3.313 3.313-1 1-3.313-3.313v-0.531l-0.188-0.188c-0.75 0.656-1.75 1.031-2.813 1.031-2.406 0-4.344-1.906-4.344-4.313s1.938-4.344 4.344-4.344 4.313 1.938 4.313 4.344c0 1.063-0.375 2.063-1.031 2.813l0.188 0.188h0.531z"></path></svg></div>
      <input aria-label="Search" name="term" placeholder="Поиск..." type="search" class="pure-u-1">
    </form>  
-	  
-	  
+   
     <div id="th-uinfo" class="pure-u-1 pure-u-md-12-24"> <!-- class="pure-u-1 pure-u-md-8-24" -->
       <div class="cw-items can-transform">
         @if current_user.is_anonymous:
@@ -136,7 +140,7 @@
     </div>
   </div>
    
-    
+	
   @def content():
   <div class="pure-g">
     <div class="pure-u-1 pure-u-md-18-24"> <!-- main -->
@@ -145,7 +149,7 @@
       @end
       @for message in get_flashed_messages(category_filter=["message"]):
         <div class="message" style="margin-top: 2em;">@{ message }</div>
-      @end		
+      @end
       @def main():
       @end
       @{main()!!html}
@@ -161,23 +165,23 @@
 
   <div class="footer">
     @def footer():
-	  
-	  <div class="footer-right">
-        @for text,link in config.site.footer.links.items():
-          <a href="@{link}">@{text}</a> • 
-        @end
-          <a href="/license">License</a>
-      </div>
-	  
-      &copy; @{config.site.copyright}
-	  
-	  <div class="footer-stat">
+      &copy;@{config.site.copyright}
+      <br>
+      @for text,link in config.site.footer.links.items():
+        <a href="@{link}">@{text}</a> |
+      @end
+      <a href="/license">@{_('License')}</a>
+      <br>
+   
+									 
+   
+							
       @{_('Served by %(hostname)s', hostname=hostname)} \
-      @if config.app.debug or current_user.admin:
+      @if config.app.debug:
        | @{_('Page generated in __EXECUTION_TIME__ms with __DB_QUERIES__ queries')}
       @end
-	  </div>
-	  
+		 
+   
     @end
     @{footer()!!html}
   </div>
@@ -190,13 +194,13 @@
         <div id="chcont"></div>
         <div id="chbott" style="display: none"><input type="text" id="chsend" maxlength="250" placeholder="@{_('Type here')}"/></div>
       </div>
-	    <label id="throat-chat" name="true" style="display: none;"></label>
+      <label id="throat-chat" name="true" style="display: none;"></label>
       @end
     @end
     @{chat()!!html}
   @end
   <script src="@{ asset_url_for('main.js') }"></script>
-  <style>@{current_user.get_global_stylesheet()}</style>
+  <style>@{current_user.get_global_stylesheet()!!html}</style>
   @def pagefoot():
   @end
   @{pagefoot()!!html}
